@@ -1,8 +1,7 @@
 "use strict";
 const TelegramBot = require("node-telegram-bot-api");
 const Request = require("request");
-// const fs = require("fs");
-const TOKEN = 'TOKEN GOES HERE';
+const TOKEN = ''; // <- TOKEN GOES HERE
 
 const bot = new TelegramBot(TOKEN, {
     polling: true
@@ -21,11 +20,18 @@ bot.on("message", msg => {
     const result = regex.test(messageText);
 
     if (result) {
-        Request(`http://mobilna.poczta-polska.pl/MobiPost/getpackage?action=getPackageData&search=${messageText}`, function (error, response, body) {
+        Request(`http://mobilna.poczta-polska.pl/MobiPost/getpackage?action=getPackageData&search=${messageText}`, 
+        function (error, response, body) {
             if (response.statusCode === 200) {
                 const data = JSON.parse(body);
                 data.forEach(key => {
-                    bot.sendMessage(id, `#${key.numer} \n📆 Data nadania: ${key.dataNadania} \n📦 ${key.masa} kg \n🏷 Rodzaj przesyłki: ${key.rodzPrzes} \n🏤 Jednostka Przeznaczenia: ${key.jednstkaPrzeznaczenia}`);
+                    let message =
+                        `${key.numer} \n📆 Data nadania: ${key.dataNadania} \n📦 ${key.masa} kg \n🏷 Rodzaj przesyłki: ${key.rodzPrzes} \n🏤 Jedn. Przeznaczenia: ${key.jednstkaPrzeznaczenia}`;
+
+                    key.zdarzenia.forEach(action => {
+                        message += `\n📆 ${action.czasZadrzenia} → 🔘${action.nazwa}`;
+                    });
+                    bot.sendMessage(id, message);
                 });
             } else {
                 bot.sendMessage(id, error);
