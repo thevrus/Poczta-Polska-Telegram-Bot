@@ -12,7 +12,6 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(msg.chat.id, greetMessage);
 });
 
-
 bot.on("message", msg => {
     const id = msg.chat.id;
     const messageText = msg.text;
