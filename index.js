@@ -1,42 +1,56 @@
 "use strict";
-const TelegramBot = require("node-telegram-bot-api");
+const TelegramBOT = require("node-telegram-bot-api");
 const Request = require("request");
-const TOKEN = ""; // <- TOKEN GOES HERE
+require("dotenv").config();
 
-const bot = new TelegramBot(TOKEN, {
+const TOKEN = process.env.TOKEN;
+const BOT = new TelegramBOT(TOKEN, {
   polling: true
 });
 
-bot.onText(/\/start/, msg => {
-  const greetMessage = `Aby sprawdzić status przesyłki  — wystarczy wysłać numer. \nŻyczenia i uwagi piszcie 👉🏼 @vrusin`;
-  bot.sendMessage(msg.chat.id, greetMessage);
+BOT.onText(/\/start/, msg => {
+  const greetMessage = `Aby sprawdzić status przesyłki — wystarczy wysłać numer. \n
+  Życzenia i uwagi piszcie 👉🏼 @vrusin`;
+  BOT.sendMessage(msg.chat.id, greetMessage);
 });
 
-bot.on("message", msg => {
+BOT.on("message", msg => {
   const id = msg.chat.id;
   const messageText = msg.text;
   const regex = /^\d{20}/;
   const result = regex.test(messageText);
+  const request = `http://mobilna.poczta-polska.pl/MobiPost/getpackage?action=getPackageData&search=${messageText}`;
+
+  function failureMessage() {
+    BOT.sendMessage(id, "Coś poszło nie tak 🤔\nSprobuj ponownie!");
+  }
 
   if (result) {
-    Request(
-      `http://mobilna.poczta-polska.pl/MobiPost/getpackage?action=getPackageData&search=${messageText}`,
-      function(error, response, body) {
-        if (response.statusCode === 200) {
-          const data = JSON.parse(body);
-          data.forEach(key => {
-            let message = `${key.numer} \n📆 Data nadania: ${key.dataNadania} \n📦 ${key.masa} kg \n🏷 Rodzaj przesyłki: ${key.rodzPrzes} \n🏤 Jedn. Przeznaczenia: ${key.jednstkaPrzeznaczenia}`;
+    Request(request, function(error, response, body) {
+      if (response.statusCode === 200) {
+        const data = JSON.parse(body);
 
-            key.zdarzenia.forEach(action => {
+        if (data.zdarzenia) {
+          data.forEach(item => {
+            let message = `
+            ${item.numer} \n
+            📆 Data nadania: ${item.dataNadania} \n
+            📦 ${item.masa} kg \n
+            🏷 Rodzaj przesyłki: ${item.rodzPrzes} \n
+            🏤 Jedn. Przeznaczenia: ${item.jednstkaPrzeznaczenia}`;
+
+            item.zdarzenia.forEach(action => {
               message += `\n📆 ${action.czasZadrzenia} → 🔘${action.nazwa}`;
             });
-            bot.sendMessage(id, message);
+
+            BOT.sendMessage(id, message);
           });
         } else {
-          bot.sendMessage(id, error);
+          failureMessage();
         }
+      } else {
+        failureMessage();
       }
-    );
+    });
   }
-  // bot.sendMessage(id, '🤔 Wydaje się że wprowadziłeś błedny numer, sprobuj ponownie.');
 });

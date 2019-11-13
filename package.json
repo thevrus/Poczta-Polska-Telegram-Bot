@@ -1,16 +1,20 @@
 {
-  "name": "Telegram_JSBot",
+  "name": "poczta_polska_telegram_bot",
+  "description": "This Telegram bot gets information about your package via track number and sends it back to you.",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "npm install && node index.js",
+    "dev": "node index.js"
   },
-  "keywords": [],
-  "author": "",
+  "author": "Vadym Rusin",
   "license": "MIT",
   "dependencies": {
+    "dotenv": "^8.2.0",
     "node-telegram-bot-api": "^0.30.0",
     "request": "^2.88.0"
+  },
+  "engines": {
+    "node": "12.x"
   }
 }
